@@ -1,0 +1,7 @@
+Test ID,Date and Time,Original File,Received File,Original CRC-32,Received CRC-32,Status
+TEST-001,2026-09-14 21:06:21,patient_report_01.pdf,patient_01_received.pdf,6009CEBA,6009CEBA,VALID
+TEST-002,2026-09-14 21:06:36,patient_report_02.pdf,patient_02_received.pdf,66DFC30A,66DFC30A,VALID
+TEST-003,2026-09-14 21:08:28,patient_report_03.pdf,patient_03_received.pdf,66DFC30A,EBCC35BF,CORRUPTED
+TEST-004,2026-09-14 21:08:47,patient_report_04.pdf,patient_04_received.pdf,EBCC35BF,A480F037,CORRUPTED
+TEST-005,2026-09-14 21:09:20,patient_report_05.pdf,patient_05_received.pdf,A480F037,6009CEBA,CORRUPTED
+TEST-006,2026-09-14 21:09:39,patient_report_06.pdf,patient_06_received.pdf,66DFC30A,66DFC30A,VALID
