@@ -5,28 +5,6 @@ from datetime import datetime
 
 
 # ============================================================
-# CRC-3 IMPLEMENTATION
-# ============================================================
-
-def crc3(data):
-    # CRC-3 polynomial: x^3 + x + 1 -> binary 1011
-    polynomial = 0b1011
-    width = 3
-    crc = 0
-
-    for byte in data:
-        crc = crc ^ byte
-
-        for i in range(8):
-            if crc & 0x80:
-                crc = ((crc << 1) ^ (polynomial << (8 - width))) & 0xFF
-            else:
-                crc = (crc << 1) & 0xFF
-
-    return format(crc >> (8 - width), "03b")
-
-
-# ============================================================
 # CRC-32 IMPLEMENTATION
 # ============================================================
 
@@ -336,34 +314,18 @@ if st.button("Verify Hospital Report"):
                 receiver_data = bytes(receiver_data)
 
         # ----------------------------------------------------
-        # CRC CALCULATION
+        # CRC-32 CALCULATION
         # ----------------------------------------------------
 
-        # Binary Data uses CRC-3 only.
-        if input_type == "Binary Data":
+        original_crc = crc32(sender_data)
 
-            original_crc3 = crc3(sender_data)
-            received_crc3 = crc3(receiver_data)
-
-            # Use CRC-3 values for saving and verification.
-            original_crc = original_crc3
-            received_crc = received_crc3
-
-            crc_match = original_crc3 == received_crc3
-
-        # File Upload and Text Message use CRC-32.
-        else:
-
-            original_crc = crc32(sender_data)
-            received_crc = crc32(receiver_data)
-
-            crc_match = original_crc == received_crc
+        received_crc = crc32(receiver_data)
 
         # ----------------------------------------------------
         # VERIFICATION
         # ----------------------------------------------------
 
-        if crc_match:
+        if original_crc == received_crc:
 
             status = "VALID"
 
@@ -393,38 +355,19 @@ if st.button("Verify Hospital Report"):
 
         st.header("Current Verification Result")
 
-        if input_type == "Binary Data":
+        col1, col2 = st.columns(2)
 
-            st.subheader("CRC-3 Test Result")
+        with col1:
 
-            crc3_col1, crc3_col2 = st.columns(2)
+            st.write("Original CRC-32")
 
-            with crc3_col1:
-                st.write("Original CRC-3")
-                st.code(original_crc3)
+            st.code(original_crc)
 
-            with crc3_col2:
-                st.write("Received CRC-3")
-                st.code(received_crc3)
+        with col2:
 
-            if original_crc3 == received_crc3:
-                st.info("CRC-3 Check: MATCH")
-            else:
-                st.warning("CRC-3 Check: MISMATCH")
+            st.write("Received CRC-32")
 
-        else:
-
-            st.subheader("CRC-32 Test Result")
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.write("Original CRC-32")
-                st.code(original_crc)
-
-            with col2:
-                st.write("Received CRC-32")
-                st.code(received_crc)
+            st.code(received_crc)
 
         if status == "VALID":
 
