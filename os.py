@@ -345,6 +345,10 @@ if st.button("Verify Hospital Report"):
             original_crc3 = crc3(sender_data)
             received_crc3 = crc3(receiver_data)
 
+            # Use CRC-3 values for saving and verification.
+            original_crc = original_crc3
+            received_crc = received_crc3
+
             crc_match = original_crc3 == received_crc3
 
         # File Upload and Text Message use CRC-32.
