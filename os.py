@@ -336,26 +336,30 @@ if st.button("Verify Hospital Report"):
                 receiver_data = bytes(receiver_data)
 
         # ----------------------------------------------------
-        # CRC-3 CALCULATION
+        # CRC CALCULATION
         # ----------------------------------------------------
 
-        original_crc3 = crc3(sender_data)
-        received_crc3 = crc3(receiver_data)
+        # Binary Data uses CRC-3 only.
+        if input_type == "Binary Data":
 
-        # ----------------------------------------------------
-        # CRC-32 CALCULATION
-        # ----------------------------------------------------
+            original_crc3 = crc3(sender_data)
+            received_crc3 = crc3(receiver_data)
 
-        original_crc = crc32(sender_data)
+            crc_match = original_crc3 == received_crc3
 
-        received_crc = crc32(receiver_data)
+        # File Upload and Text Message use CRC-32.
+        else:
+
+            original_crc = crc32(sender_data)
+            received_crc = crc32(receiver_data)
+
+            crc_match = original_crc == received_crc
 
         # ----------------------------------------------------
         # VERIFICATION
-        # CRC-32 remains the main dashboard verification method.
         # ----------------------------------------------------
 
-        if original_crc == received_crc:
+        if crc_match:
 
             status = "VALID"
 
@@ -385,38 +389,38 @@ if st.button("Verify Hospital Report"):
 
         st.header("Current Verification Result")
 
-        st.subheader("CRC-3 Test Result")
+        if input_type == "Binary Data":
 
-        crc3_col1, crc3_col2 = st.columns(2)
+            st.subheader("CRC-3 Test Result")
 
-        with crc3_col1:
-            st.write("Original CRC-3")
-            st.code(original_crc3)
+            crc3_col1, crc3_col2 = st.columns(2)
 
-        with crc3_col2:
-            st.write("Received CRC-3")
-            st.code(received_crc3)
+            with crc3_col1:
+                st.write("Original CRC-3")
+                st.code(original_crc3)
 
-        if original_crc3 == received_crc3:
-            st.info("CRC-3 Check: MATCH")
+            with crc3_col2:
+                st.write("Received CRC-3")
+                st.code(received_crc3)
+
+            if original_crc3 == received_crc3:
+                st.info("CRC-3 Check: MATCH")
+            else:
+                st.warning("CRC-3 Check: MISMATCH")
+
         else:
-            st.warning("CRC-3 Check: MISMATCH")
 
-        st.subheader("CRC-32 Test Result")
+            st.subheader("CRC-32 Test Result")
 
-        col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2)
 
-        with col1:
+            with col1:
+                st.write("Original CRC-32")
+                st.code(original_crc)
 
-            st.write("Original CRC-32")
-
-            st.code(original_crc)
-
-        with col2:
-
-            st.write("Received CRC-32")
-
-            st.code(received_crc)
+            with col2:
+                st.write("Received CRC-32")
+                st.code(received_crc)
 
         if status == "VALID":
 
