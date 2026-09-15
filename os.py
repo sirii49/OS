@@ -27,6 +27,45 @@ def crc32(data):
 
 
 # ============================================================
+# INPUT CONVERSION HELPERS
+# ============================================================
+
+def text_to_bytes(text):
+    return text.encode("utf-8")
+
+
+def binary_to_bytes(binary_str):
+
+    binary_str = binary_str.strip().replace(" ", "")
+
+    # Pad so length is a multiple of 8
+    padding = (8 - len(binary_str) % 8) % 8
+    binary_str = binary_str + ("0" * padding)
+
+    byte_values = []
+
+    for i in range(0, len(binary_str), 8):
+        byte_chunk = binary_str[i:i + 8]
+        byte_values.append(int(byte_chunk, 2))
+
+    return bytes(byte_values)
+
+
+def is_valid_binary(binary_str):
+
+    binary_str = binary_str.strip().replace(" ", "")
+
+    if len(binary_str) == 0:
+        return False
+
+    for ch in binary_str:
+        if ch not in ("0", "1"):
+            return False
+
+    return True
+
+
+# ============================================================
 # VERIFICATION HISTORY FILE
 # ============================================================
 
@@ -44,8 +83,9 @@ def create_history_file():
             writer.writerow([
                 "Test ID",
                 "Date and Time",
-                "Original File",
-                "Received File",
+                "Input Type",
+                "Original Source",
+                "Received Source",
                 "Original CRC-32",
                 "Received CRC-32",
                 "Status"
@@ -67,8 +107,9 @@ def get_next_test_id():
 
 def save_verification(
     test_id,
-    original_file,
-    received_file,
+    input_type,
+    original_source,
+    received_source,
     original_crc,
     received_crc,
     status
@@ -83,8 +124,9 @@ def save_verification(
         writer.writerow([
             test_id,
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            original_file,
-            received_file,
+            input_type,
+            original_source,
+            received_source,
             original_crc,
             received_crc,
             status
@@ -124,25 +166,112 @@ st.write(
 
 
 # ============================================================
-# FILE INPUT
+# INPUT TYPE SELECTION
+# ============================================================
+
+st.header("Select Input Type")
+
+input_type = st.radio(
+    "Choose how the hospital report data will be provided",
+    ["File Upload", "Text Message", "Binary Data"],
+    horizontal=True
+)
+
+
+# ============================================================
+# SENDER DEPARTMENT INPUT
 # ============================================================
 
 st.header("Sender Department")
 
-sender_file = st.file_uploader(
-    "Upload Original Hospital Report",
-    type=["txt", "csv", "pdf", "docx"],
-    key="sender"
-)
+sender_data = None
+sender_source = None
 
+if input_type == "File Upload":
+
+    sender_file = st.file_uploader(
+        "Upload Original Hospital Report",
+        type=["txt", "csv", "pdf", "docx"],
+        key="sender_file"
+    )
+
+    if sender_file is not None:
+        sender_data = sender_file.read()
+        sender_source = sender_file.name
+
+elif input_type == "Text Message":
+
+    sender_text = st.text_area(
+        "Enter Original Report Text",
+        key="sender_text"
+    )
+
+    if sender_text:
+        sender_data = text_to_bytes(sender_text)
+        sender_source = sender_text
+
+elif input_type == "Binary Data":
+
+    sender_binary = st.text_input(
+        "Enter Original Binary Data (e.g. 101101)",
+        key="sender_binary"
+    )
+
+    if sender_binary:
+
+        if is_valid_binary(sender_binary):
+            sender_data = binary_to_bytes(sender_binary)
+            sender_source = sender_binary
+        else:
+            st.warning("Binary input must contain only 0s and 1s.")
+
+
+# ============================================================
+# RECEIVER DEPARTMENT INPUT
+# ============================================================
 
 st.header("Receiver Department")
 
-receiver_file = st.file_uploader(
-    "Upload Received Hospital Report",
-    type=["txt", "csv", "pdf", "docx"],
-    key="receiver"
-)
+receiver_data = None
+receiver_source = None
+
+if input_type == "File Upload":
+
+    receiver_file = st.file_uploader(
+        "Upload Received Hospital Report",
+        type=["txt", "csv", "pdf", "docx"],
+        key="receiver_file"
+    )
+
+    if receiver_file is not None:
+        receiver_data = receiver_file.read()
+        receiver_source = receiver_file.name
+
+elif input_type == "Text Message":
+
+    receiver_text = st.text_area(
+        "Enter Received Report Text",
+        key="receiver_text"
+    )
+
+    if receiver_text:
+        receiver_data = text_to_bytes(receiver_text)
+        receiver_source = receiver_text
+
+elif input_type == "Binary Data":
+
+    receiver_binary = st.text_input(
+        "Enter Received Binary Data (e.g. 101101)",
+        key="receiver_binary"
+    )
+
+    if receiver_binary:
+
+        if is_valid_binary(receiver_binary):
+            receiver_data = binary_to_bytes(receiver_binary)
+            receiver_source = receiver_binary
+        else:
+            st.warning("Binary input must contain only 0s and 1s.")
 
 
 # ============================================================
@@ -162,19 +291,13 @@ simulate_error = st.checkbox(
 
 if st.button("Verify Hospital Report"):
 
-    if sender_file is None or receiver_file is None:
+    if sender_data is None or receiver_data is None:
 
         st.error(
-            "Please upload both the Original File and Received File."
+            "Please provide both the Original and Received data."
         )
 
     else:
-
-        # Read Sender file
-        sender_data = sender_file.read()
-
-        # Read Receiver file
-        receiver_data = receiver_file.read()
 
         # ----------------------------------------------------
         # ERROR SIMULATION
@@ -218,8 +341,9 @@ if st.button("Verify Hospital Report"):
 
         save_verification(
             test_id,
-            sender_file.name,
-            receiver_file.name,
+            input_type,
+            sender_source,
+            receiver_source,
             original_crc,
             received_crc,
             status
@@ -410,8 +534,9 @@ if st.button("Clear Verification History"):
         writer.writerow([
             "Test ID",
             "Date and Time",
-            "Original File",
-            "Received File",
+            "Input Type",
+            "Original Source",
+            "Received Source",
             "Original CRC-32",
             "Received CRC-32",
             "Status"
