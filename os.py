@@ -5,6 +5,28 @@ from datetime import datetime
 
 
 # ============================================================
+# CRC-3 IMPLEMENTATION
+# ============================================================
+
+def crc3(data):
+    # CRC-3 polynomial: x^3 + x + 1 -> binary 1011
+    polynomial = 0b1011
+    width = 3
+    crc = 0
+
+    for byte in data:
+        crc = crc ^ byte
+
+        for i in range(8):
+            if crc & 0x80:
+                crc = ((crc << 1) ^ (polynomial << (8 - width))) & 0xFF
+            else:
+                crc = (crc << 1) & 0xFF
+
+    return format(crc >> (8 - width), "03b")
+
+
+# ============================================================
 # CRC-32 IMPLEMENTATION
 # ============================================================
 
@@ -314,6 +336,13 @@ if st.button("Verify Hospital Report"):
                 receiver_data = bytes(receiver_data)
 
         # ----------------------------------------------------
+        # CRC-3 CALCULATION
+        # ----------------------------------------------------
+
+        original_crc3 = crc3(sender_data)
+        received_crc3 = crc3(receiver_data)
+
+        # ----------------------------------------------------
         # CRC-32 CALCULATION
         # ----------------------------------------------------
 
@@ -323,6 +352,7 @@ if st.button("Verify Hospital Report"):
 
         # ----------------------------------------------------
         # VERIFICATION
+        # CRC-32 remains the main dashboard verification method.
         # ----------------------------------------------------
 
         if original_crc == received_crc:
@@ -354,6 +384,25 @@ if st.button("Verify Hospital Report"):
         # ----------------------------------------------------
 
         st.header("Current Verification Result")
+
+        st.subheader("CRC-3 Test Result")
+
+        crc3_col1, crc3_col2 = st.columns(2)
+
+        with crc3_col1:
+            st.write("Original CRC-3")
+            st.code(original_crc3)
+
+        with crc3_col2:
+            st.write("Received CRC-3")
+            st.code(received_crc3)
+
+        if original_crc3 == received_crc3:
+            st.info("CRC-3 Check: MATCH")
+        else:
+            st.warning("CRC-3 Check: MISMATCH")
+
+        st.subheader("CRC-32 Test Result")
 
         col1, col2 = st.columns(2)
 
